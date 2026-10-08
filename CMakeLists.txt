@@ -32,7 +32,6 @@ install(DIRECTORY lli/runtime-include/c/ DESTINATION "${PKG_INCLUDE_DIR}" FILES_
 ### Whether to build lli-based binary
 option(BUILD_LLI "Build lli-based executable (requires LLVM)" ON)
 if(BUILD_LLI)
-  find_library(HAVE_LIBDL dl REQUIRED)
   find_library(HAVE_LIBFFI ffi REQUIRED)
 
   # For linking to LLVM, see: https://llvm.org/docs/CMake.html#embedding-llvm-in-your-project

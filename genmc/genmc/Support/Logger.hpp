@@ -89,10 +89,10 @@ public:
 	/* In case multiple `LoggerOnce` are created with the same id, the one that was created
 	 * first will be used. */
 	LoggerOnce(const std::string &id, VerbosityLevel l = VerbosityLevel::Warning)
-		: Logger<U>(l, true), shouldPrint_(!ids_.contains(id))
+		: Logger<U>(l, true), shouldPrint_(!get_ids().contains(id))
 	{
 		if (shouldPrint_) {
-			ids_.insert(id);
+			get_ids().insert(id);
 			Logger<U>::printLevel(l);
 		}
 	}
@@ -104,9 +104,13 @@ public:
 	}
 
 private:
+	static std::set<std::string>& get_ids()
+	{
+		thread_local std::set<std::string> ids;
+		return ids;		
+	}
+	
 	const bool shouldPrint_{}; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
-
-	static thread_local inline std::set<std::string> ids_;
 };
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
