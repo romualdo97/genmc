@@ -537,11 +537,18 @@ static auto getOutFilename(const LLIConfig & /* lliConfig */) -> std::string
 	if (createdFilename)
 		return filename;
 
-	/* Honor the system temp directory (e.g., $TMPDIR), falling back to /tmp */
+	/* Honor the system temp directory (e.g., $TMPDIR), falling back to /tmp or ./tmp on windows */
 	std::error_code ec;
 	auto dir = std::filesystem::temp_directory_path(ec);
-	if (ec)
+	if (ec) {
+#ifdef _WIN32
+		dir = std::filesystem::current_path();
+		dir /= "tmp";
+		std::filesystem::create_directories(dir, ec);
+#else
 		dir = "/tmp";
+#endif
+	}
 
 	auto tmpl = (dir / "__genmc.ll.XXXXXX").string();
 	close(mkstemp(tmpl.data()));
@@ -561,11 +568,11 @@ static auto buildCompilationArgs(const LLIConfig &lliConfig) -> std::string
 	args += lliConfig.rust ? " -gdwarf-4" : " -g";
 	for (const auto &f : lliConfig.cflags)
 		args += " " + f;
-	args += " -I'" SRC_INCLUDE_DIR "'";
-	args += " -I'" INCLUDE_DIR "'";
+	args += " -I\"" SRC_INCLUDE_DIR "\"";
+	args += " -I\"" INCLUDE_DIR "\"";
 	args += " -S -emit-llvm";
-	args += " -o " + getOutFilename(lliConfig);
-	args += " '" + lliConfig.inputFile + "'";
+	args += " -o \"" + getOutFilename(lliConfig) + "\"";
+	args += " \"" + lliConfig.inputFile + "\"";
 
 	return args;
 }

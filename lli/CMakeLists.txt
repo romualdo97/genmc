@@ -10,7 +10,43 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAK
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE genmc_config_includes genmc_lib genmc_passes ffi dl LLVM)
+target_link_libraries(${PROJECT_NAME} PRIVATE genmc_config_includes genmc_lib genmc_passes ffi ${CMAKE_DL_LIBS} LLVM)
+
+if(WIN32)
+  if(MSVC)
+    message(FATAL_ERROR "Compilation with MSVC is not currently supported. Please use MinGW/MSYS2 (GCC or Clang) instead.")
+  endif()
+  
+  if(MINGW) # True only when targeting the GNU ABI on Windows
+    include(CheckCXXSourceCompiles)
+
+    # In MSYS2, both g++ and clang++ use GNU's libstdc++ by default.
+    # std::print / std::println require stdc++exp unless LLVM's libc++ is used.
+    # this function is used to "locally" check if we are using LLVM's libc++ runtime.
+    function(check_using_libcxx)
+      get_target_property(_cxx_std genmc_config_includes CXX_STANDARD)
+      if(_cxx_std)
+        set(CMAKE_CXX_STANDARD ${_cxx_std})
+        set(CMAKE_CXX_STANDARD_REQUIRED ON)
+      endif()
+
+      unset(GENMC_MINGW_USING_LIBCXX CACHE) # Force re-check
+      check_cxx_source_compiles("
+      #include <version>
+      #if !defined(_LIBCPP_VERSION)
+      #error \"Not using LLVM's libc++ runtime\"
+      #endif
+      int main() { return 0; }
+      " GENMC_MINGW_USING_LIBCXX)
+    endfunction()
+
+    check_using_libcxx()
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT GENMC_MINGW_USING_LIBCXX))
+      target_link_libraries(${PROJECT_NAME} PRIVATE stdc++exp)
+    endif()
+  endif()
+endif()
 
 ### Faster allocator for the allocation-heavy exploration; off under SANITIZE (own malloc)
 set(GENMC_TCMALLOC "AUTO" CACHE STRING "Link tcmalloc: AUTO (use if found), ON (required), OFF")
