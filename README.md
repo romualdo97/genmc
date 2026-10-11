@@ -50,6 +50,40 @@ Using `brew`, the following packages are necessary:
 
 		cmake llvm libffi
 
+##### Windows/MSYS2
+
+Compilation under Windows is possible via [MSYS2](https://www.msys2.org/docs/what-is-msys2/),
+where the package manager will be `pacman` (known from Arch Linux).
+[Read here](https://www.msys2.org/docs/environments/) for more details on the different MSYS2 environments.
+
+###### `UCRT64` environment
+
+The following packages are necessary.
+
+		pacman -S --needed \
+			mingw-w64-ucrt-x86_64-cmake \
+			mingw-w64-ucrt-x86_64-clang \
+			mingw-w64-ucrt-x86_64-llvm \
+			mingw-w64-ucrt-x86_64-libffi \
+			mingw-w64-ucrt-x86_64-zlib
+
+###### `CLANG64` environment
+
+The following packages are necessary.
+
+		pacman -S --needed \
+			mingw-w64-clang-x86_64-cmake \
+			mingw-w64-clang-x86_64-clang \
+			mingw-w64-clang-x86_64-llvm \
+			mingw-w64-clang-x86_64-libffi \
+			mingw-w64-clang-x86_64-zlib
+
+To run the default tests, `bc` is also required. Once your environment is set up you can also run the
+project directly from CLion via.
+
+		-DCMAKE_PREFIX_PATH=C:/msys64/ucrt64
+		-DCMAKE_LIBRARY_PATH=C:/msys64/ucrt64/lib
+
 #### Installing
 
 For a default build issue the command below. The usual `CMAKE_PREFIX_PATH` can be used
